@@ -22,6 +22,9 @@ require_once __DIR__ . '/../../../init.php';
 require_once __DIR__ . '/../../../includes/gatewayfunctions.php';
 require_once __DIR__ . '/../../../includes/invoicefunctions.php';
 
+// Require Veritrans Library
+require_once __DIR__ . '/../veritrans-lib/Veritrans.php';
+
 // Detect module name from filename.
 $gatewayModuleName = basename(__FILE__, '.php');
 
@@ -35,14 +38,12 @@ if (!$gatewayParams['type']) {
 
 // Retrieve data returned in payment gateway callback
 // Varies per payment gateway
-$success = $_POST["x_status"];
-$invoiceId = $_POST["x_invoice_id"];
-$transactionId = $_POST["x_trans_id"];
-$paymentAmount = $_POST["x_amount"];
-$paymentFee = $_POST["x_fee"];
-$hash = $_POST["x_hash"];
-
-$transactionStatus = $success ? 'Success' : 'Failure';
+// $success = $_POST["x_status"];
+// $invoiceId = $_POST["x_invoice_id"];
+// $transactionId = $_POST["x_trans_id"];
+// $paymentAmount = $_POST["x_amount"];
+// $paymentFee = $_POST["x_fee"];
+// $hash = $_POST["x_hash"];
 
 /**
  * Validate callback authenticity.
@@ -51,11 +52,19 @@ $transactionStatus = $success ? 'Success' : 'Failure';
  * originated from them. In the case of our example here, this is achieved by
  * way of a shared secret which is used to build and compare a hash.
  */
-$secretKey = $gatewayParams['secretKey'];
-if ($hash != md5($invoiceId . $transactionId . $paymentAmount . $secretKey)) {
-    $transactionStatus = 'Hash Verification Failure';
-    $success = false;
-}
+
+// Create veritrans notif object from HTTP POST notif
+Veritrans_Config::$isProduction = ($gatewayParams['environment'] == 'production') ? true : false;
+Veritrans_Config::$serverKey = $gatewayParams['serverkey'];
+$veritrans_notification = new Veritrans_Notification();
+
+$transaction_status = $veritrans_notification->transaction_status;
+$order_id = $veritrans_notification->order_id;
+$invoiceId = $order_id;
+$payment_type = $veritrans_notification->payment_type;
+$paymentAmount = $veritrans_notification->gross_amount;
+$transactionId = $veritrans_notification->transaction_id;
+$paymentFee = 0;
 
 /**
  * Validate Callback Invoice ID.
@@ -77,7 +86,7 @@ $invoiceId = checkCbInvoiceID($invoiceId, $gatewayParams['name']);
  *
  * Performs a die upon encountering a duplicate.
  */
-checkCbTransID($transactionId);
+// checkCbTransID($transactionId); // No need to check, because Veritrans notification can be send more than once per transactionid.
 
 /**
  * Log Transaction.
@@ -91,7 +100,36 @@ checkCbTransID($transactionId);
  * @param string|array $debugData    Data to log
  * @param string $transactionStatus  Status
  */
-logTransaction($gatewayParams['name'], $_POST, $transactionStatus);
+logTransaction($gatewayParams['name'], $_POST, $transaction_status);
+
+
+// trx status handler
+$success = false;
+if ($veritrans_notification->transaction_status == 'capture') {
+  if ($veritrans_notification->fraud_status == 'accept') {
+    $success = true;
+  }
+  else if ($veritrans_notification->fraud_status == 'challenge') {
+    $success = false;
+  }
+}
+else if ($veritrans_notification->transaction_status == 'cancel') {
+  $success = false;
+}
+else if ($veritrans_notification->transaction_status == 'deny') {
+  $success = false;
+}
+else if ($veritrans_notification->transaction_status == 'settlement') {
+  if($veritrans_notification->payment_type != 'credit_card'){
+    die("Credit Card Settlement Notification Received");
+  }
+  else{
+    $success = true;
+  }
+}
+else if ($veritrans_notification->transaction_status == 'pending') {
+  $success = false;
+}
 
 if ($success) {
 
@@ -114,4 +152,9 @@ if ($success) {
         $gatewayModuleName
     );
 
+    echo "Payment success notification accepted";
+
+}
+else{
+    die("Payment failed, denied or pending");
 }

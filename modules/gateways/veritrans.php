@@ -29,6 +29,8 @@ if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
 
+require_once(dirname(__FILE__) . '/veritrans-lib/Veritrans.php');
+
 /**
  * Define module related meta data.
  *
@@ -39,13 +41,13 @@ if (!defined("WHMCS")) {
  *
  * @return array
  */
-function gatewaymodule_MetaData()
+function veritrans_MetaData()
 {
     return array(
-        'DisplayName' => 'Sample Payment Gateway Module',
+        'DisplayName' => 'Veritrans Payment Gateway Module',
         'APIVersion' => '1.1', // Use API Version 1.1
         'DisableLocalCredtCardInput' => true,
-        'TokenisedStorage' => false,
+        'TokenisedStorage' => true,
     );
 }
 
@@ -69,62 +71,46 @@ function gatewaymodule_MetaData()
  *
  * @return array
  */
-function gatewaymodule_config()
+function veritrans_config()
 {
     return array(
         // the friendly display name for a payment gateway should be
         // defined here for backwards compatibility
         'FriendlyName' => array(
             'Type' => 'System',
-            'Value' => 'Sample Third Party Payment Gateway Module',
+            'Value' => 'Credit Card & other(by Veritrans)',
         ),
         // a text field type allows for single line text input
-        'accountID' => array(
-            'FriendlyName' => 'Account ID',
+        'clientkey' => array(
+            'FriendlyName' => 'Veritrans Client Key',
             'Type' => 'text',
-            'Size' => '25',
+            'Size' => '50',
             'Default' => '',
-            'Description' => 'Enter your account ID here',
+            'Description' => 'Input your Client Server Key. Get it at my.veritrans.co.id',
         ),
-        // a password field type allows for masked text input
-        'secretKey' => array(
-            'FriendlyName' => 'Secret Key',
-            'Type' => 'password',
-            'Size' => '25',
+        // a text field type allows for single line text input
+        'serverkey' => array(
+            'FriendlyName' => 'Veritrans Server Key',
+            'Type' => 'text',
+            'Size' => '50',
             'Default' => '',
-            'Description' => 'Enter secret key here',
-        ),
-        // the yesno field type displays a single checkbox option
-        'testMode' => array(
-            'FriendlyName' => 'Test Mode',
-            'Type' => 'yesno',
-            'Description' => 'Tick to enable test mode',
+            'Description' => 'Input your Veritrans Server Key. Get it at my.veritrans.co.id',
         ),
         // the dropdown field type renders a select menu of options
-        'dropdownField' => array(
-            'FriendlyName' => 'Dropdown Field',
+        'environment' => array(
+            'FriendlyName' => 'Environment Mode',
             'Type' => 'dropdown',
             'Options' => array(
-                'option1' => 'Display Value 1',
-                'option2' => 'Second Option',
-                'option3' => 'Another Option',
+                'sandbox' => 'Sandbox',
+                'production' => 'Production',
             ),
-            'Description' => 'Choose one',
+            'Description' => 'Select the Veritrans Environment, sandbox is for testing transaction',
         ),
-        // the radio field type displays a series of radio button options
-        'radioField' => array(
-            'FriendlyName' => 'Radio Field',
-            'Type' => 'radio',
-            'Options' => 'First Option,Second Option,Third Option',
-            'Description' => 'Choose your option!',
-        ),
-        // the textarea field type allows for multi-line text input
-        'textareaField' => array(
-            'FriendlyName' => 'Textarea Field',
-            'Type' => 'textarea',
-            'Rows' => '3',
-            'Cols' => '60',
-            'Description' => 'Freeform multi-line text input field',
+        // the yesno field type displays a single checkbox option
+        'enable3ds' => array(
+            'FriendlyName' => 'Credit Card 3DS',
+            'Type' => 'yesno',
+            'Description' => 'Tick to enable 3DS for Credit Card payment',
         ),
     );
 }
@@ -143,15 +129,13 @@ function gatewaymodule_config()
  *
  * @return string
  */
-function gatewaymodule_link($params)
+function veritrans_link($params)
 {
     // Gateway Configuration Parameters
-    $accountId = $params['accountID'];
-    $secretKey = $params['secretKey'];
-    $testMode = $params['testMode'];
-    $dropdownField = $params['dropdownField'];
-    $radioField = $params['radioField'];
-    $textareaField = $params['textareaField'];
+    $clientkey = $params['clientkey'];
+    $serverkey = $params['serverkey'];
+    $environment = $params['environment'];
+    $enable3ds = $params['enable3ds'];
 
     // Invoice Parameters
     $invoiceId = $params['invoiceid'];
@@ -180,34 +164,107 @@ function gatewaymodule_link($params)
     $moduleName = $params['paymentmethod'];
     $whmcsVersion = $params['whmcsVersion'];
 
-    $url = 'https://www.demopaymentgateway.com/do.payment';
+    ## TODO: Build Param
+    // Set VT config
+    Veritrans_Config::$isProduction = ($environment == 'production') ? true : false;
+    Veritrans_Config::$serverKey = $serverkey;
+    // error_log($enable3ds); //debugan
+    Veritrans_Config::$is3ds = ($enable3ds == 'on') ? true : false;
+    Veritrans_Config::$isSanitized = true;
+    
+    // Build basic param
+    $params = array(
+        'vtweb' => array(
+            "finish_redirect_url" => $returnUrl,
+            "unfinish_redirect_url" => $returnUrl,
+            "error_redirect_url" => $returnUrl
+            ),
+        'transaction_details' => array(
+            'order_id' => $invoiceId,
+            'gross_amount' => ceil($amount),
+      )
+    );
 
-    $postfields = array();
-    $postfields['username'] = $username;
-    $postfields['invoice_id'] = $invoiceId;
-    $postfields['description'] = $description;
-    $postfields['amount'] = $amount;
-    $postfields['currency'] = $currencyCode;
-    $postfields['first_name'] = $firstname;
-    $postfields['last_name'] = $lastname;
-    $postfields['email'] = $email;
-    $postfields['address1'] = $address1;
-    $postfields['address2'] = $address2;
-    $postfields['city'] = $city;
-    $postfields['state'] = $state;
-    $postfields['postcode'] = $postcode;
-    $postfields['country'] = $country;
-    $postfields['phone'] = $phone;
-    $postfields['callback_url'] = $systemUrl . '/modules/gateways/callback/' . $moduleName . '.php';
-    $postfields['return_url'] = $returnUrl;
+    // Build customer details param
+    $customer_details = array();
+    $customer_details['first_name'] = $firstname;
+    $customer_details['last_name'] = $lastname;
+    $customer_details['email'] = $email;
+    $customer_details['phone'] = $phone;
 
-    $htmlOutput = '<form method="post" action="' . $url . '">';
+    $billing_address = array();
+    $billing_address['first_name'] = $firstname;
+    $billing_address['last_name'] = $lastname;
+    $billing_address['address'] = $address1.$address2;
+    $billing_address['city'] = $city;
+    $billing_address['postal_code'] = $postcode;
+    $billing_address['phone'] = $phone;
+    // $billing_address['country_code'] = (strlen($this->convert_country_code($order->billing_country) != 3 ) ? 'IDN' : $this->convert_country_code($order->billing_country) );
+    // error_log("===== country :".$country); //debugan
+    $billing_address['country_code'] = (strlen($country) != 3 ) ? 'IDN' : $country;
+    
+    // Insert array to param
+    $customer_details['billing_address'] = $billing_address;
+    $params['customer_details'] = $customer_details;
+
+    // build item details
+    $item1 = array(
+        'id' => 'a1',
+        'price' => ceil($amount),
+        'quantity' => 1,
+        'name' => $description
+    );
+    $item_details = array ($item1);
+
+    // Insert array to param
+    $params['item_details'] = $item_details;
+    // error_log("===== params :"); //debugan
+    // error_log(print_r($params,true)); //debugan
+
+    ## TODO: Get redirection URL
+    try {
+        $url = Veritrans_VtWeb::getRedirectionUrl($params);
+    } catch (Exception $e) {
+        echo 'Caught exception: ',  $e->getMessage(), "\n";
+        error_log('Caught exception: '.$e->getMessage()."\n");
+    }
+
+    // ## Unused POST method
+    // $postfields = array();
+    // $postfields['username'] = $username;
+    // $postfields['invoice_id'] = $invoiceId;
+    // $postfields['description'] = $description;
+    // $postfields['amount'] = $amount;
+    // $postfields['currency'] = $currencyCode;
+    // $postfields['first_name'] = $firstname;
+    // $postfields['last_name'] = $lastname;
+    // $postfields['email'] = $email;
+    // $postfields['address1'] = $address1;
+    // $postfields['address2'] = $address2;
+    // $postfields['city'] = $city;
+    // $postfields['state'] = $state;
+    // $postfields['postcode'] = $postcode;
+    // $postfields['country'] = $country;
+    // $postfields['phone'] = $phone;
+    // $postfields['callback_url'] = $systemUrl . '/modules/gateways/callback/' . $moduleName . '.php';
+    // $postfields['return_url'] = $returnUrl;
+    // ## Unused Post Method
+
+    $htmlOutput = '<form method="get" action="' . $url . '">';
     foreach ($postfields as $k => $v) {
         $htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . urlencode($v) . '" />';
     }
     $htmlOutput .= '<input type="submit" value="' . $langPayNow . '" />';
     $htmlOutput .= '</form>';
 
+    // ## debugan
+    $htmlOutput1 = '';
+    // $htmlOutput .=  '<form method="post" action="google.com">';
+    $htmlOutput1 .=      '<div><h1> Custom Message </h1></div>';
+    $htmlOutput1 .=      '<script> document.getElementById("frmPayment").setAttribute("id", "frmPayment-out"); </script>';  // disable form auto submit
+    // $htmlOutput .=  '</form>';
+    //  ## end of debugan
+    
     return $htmlOutput;
 }
 
@@ -222,7 +279,7 @@ function gatewaymodule_link($params)
  *
  * @return array Transaction response status
  */
-function gatewaymodule_refund($params)
+function veritrans_refund($params)
 {
     // Gateway Configuration Parameters
     $accountId = $params['accountID'];
@@ -284,7 +341,7 @@ function gatewaymodule_refund($params)
  *
  * @return array Transaction response status
  */
-function gatewaymodule_cancelSubscription($params)
+function veritrans_cancelSubscription($params)
 {
     // Gateway Configuration Parameters
     $accountId = $params['accountID'];
