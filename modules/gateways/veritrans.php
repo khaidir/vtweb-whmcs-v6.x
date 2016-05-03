@@ -225,7 +225,7 @@ function veritrans_link($params)
     try {
         $url = Veritrans_VtWeb::getRedirectionUrl($params);
     } catch (Exception $e) {
-        echo 'Caught exception: ',  $e->getMessage(), "\n";
+        // echo 'Caught exception: ',  $e->getMessage(), "\n";
         error_log('Caught exception: '.$e->getMessage()."\n");
     }
 
@@ -279,6 +279,8 @@ function veritrans_link($params)
  *
  * @return array Transaction response status
  */
+
+/** ## Method not supported on Veritrans
 function veritrans_refund($params)
 {
     // Gateway Configuration Parameters
@@ -327,6 +329,7 @@ function veritrans_refund($params)
         'fees' => $feeAmount,
     );
 }
+*/
 
 /**
  * Cancel subscription.
@@ -341,6 +344,8 @@ function veritrans_refund($params)
  *
  * @return array Transaction response status
  */
+
+/** ## Method 
 function veritrans_cancelSubscription($params)
 {
     // Gateway Configuration Parameters
@@ -371,3 +376,4 @@ function veritrans_cancelSubscription($params)
         'rawdata' => $responseData,
     );
 }
+*/

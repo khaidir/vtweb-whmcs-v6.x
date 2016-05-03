@@ -107,6 +107,7 @@ logTransaction($gatewayParams['name'], $_POST, $transaction_status);
 $success = false;
 if ($veritrans_notification->transaction_status == 'capture') {
   if ($veritrans_notification->fraud_status == 'accept') {
+    checkCbTransID($transactionId);
     $success = true;
   }
   else if ($veritrans_notification->fraud_status == 'challenge') {
@@ -120,10 +121,11 @@ else if ($veritrans_notification->transaction_status == 'deny') {
   $success = false;
 }
 else if ($veritrans_notification->transaction_status == 'settlement') {
-  if($veritrans_notification->payment_type != 'credit_card'){
+  if($veritrans_notification->payment_type == 'credit_card'){
     die("Credit Card Settlement Notification Received");
   }
   else{
+    checkCbTransID($transactionId);
     $success = true;
   }
 }
