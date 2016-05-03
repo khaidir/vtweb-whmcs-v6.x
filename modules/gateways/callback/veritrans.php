@@ -100,7 +100,7 @@ $invoiceId = checkCbInvoiceID($invoiceId, $gatewayParams['name']);
  * @param string|array $debugData    Data to log
  * @param string $transactionStatus  Status
  */
-logTransaction($gatewayParams['name'], $_POST, $transaction_status);
+logTransaction($gatewayParams['name'], print_r($veritrans_notification,true), $transaction_status);
 
 
 // trx status handler
@@ -153,7 +153,7 @@ if ($success) {
         $paymentFee,
         $gatewayModuleName
     );
-
+    // error_log("=====================".$invoiceId."-".$transactionId."-".$paymentAmount."-".$paymentFee."-".$gatewayModuleName); //debugan
     echo "Payment success notification accepted";
 
 }
