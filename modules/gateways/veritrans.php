@@ -76,13 +76,13 @@ function veritrans_config()
     return array(
         // the friendly display name for a payment gateway should be
         // defined here for backwards compatibility
-        'FriendlyName' => array(
+        'Veritrans' => array(
             'Type' => 'System',
             'Value' => 'Credit Card & other(by Veritrans)',
         ),
         // a text field type allows for single line text input
         'clientkey' => array(
-            'FriendlyName' => 'Veritrans Client Key',
+            'Veritrans' => 'Veritrans Client Key',
             'Type' => 'text',
             'Size' => '50',
             'Default' => '',
@@ -90,7 +90,7 @@ function veritrans_config()
         ),
         // a text field type allows for single line text input
         'serverkey' => array(
-            'FriendlyName' => 'Veritrans Server Key',
+            'Veritrans' => 'Veritrans Server Key',
             'Type' => 'text',
             'Size' => '50',
             'Default' => '',
@@ -98,7 +98,7 @@ function veritrans_config()
         ),
         // the dropdown field type renders a select menu of options
         'environment' => array(
-            'FriendlyName' => 'Environment Mode',
+            'Veritrans' => 'Environment Mode',
             'Type' => 'dropdown',
             'Options' => array(
                 'sandbox' => 'Sandbox',
@@ -108,7 +108,7 @@ function veritrans_config()
         ),
         // the yesno field type displays a single checkbox option
         'enable3ds' => array(
-            'FriendlyName' => 'Credit Card 3DS',
+            'Veritrans' => 'Credit Card 3DS',
             'Type' => 'yesno',
             'Description' => 'Tick to enable 3DS for Credit Card payment',
         ),
@@ -229,26 +229,6 @@ function veritrans_link($params)
         error_log('Caught exception: '.$e->getMessage()."\n");
     }
 
-    // ## Unused POST method
-    // $postfields = array();
-    // $postfields['username'] = $username;
-    // $postfields['invoice_id'] = $invoiceId;
-    // $postfields['description'] = $description;
-    // $postfields['amount'] = $amount;
-    // $postfields['currency'] = $currencyCode;
-    // $postfields['first_name'] = $firstname;
-    // $postfields['last_name'] = $lastname;
-    // $postfields['email'] = $email;
-    // $postfields['address1'] = $address1;
-    // $postfields['address2'] = $address2;
-    // $postfields['city'] = $city;
-    // $postfields['state'] = $state;
-    // $postfields['postcode'] = $postcode;
-    // $postfields['country'] = $country;
-    // $postfields['phone'] = $phone;
-    // $postfields['callback_url'] = $systemUrl . '/modules/gateways/callback/' . $moduleName . '.php';
-    // $postfields['return_url'] = $returnUrl;
-    // ## Unused Post Method
 
     $htmlOutput = '<form method="get" action="' . $url . '">';
     foreach ($postfields as $k => $v) {
@@ -267,113 +247,3 @@ function veritrans_link($params)
     
     return $htmlOutput;
 }
-
-/**
- * Refund transaction.
- *
- * Called when a refund is requested for a previously successful transaction.
- *
- * @param array $params Payment Gateway Module Parameters
- *
- * @see http://docs.whmcs.com/Payment_Gateway_Module_Parameters
- *
- * @return array Transaction response status
- */
-
-/** ## Method not supported on Veritrans
-function veritrans_refund($params)
-{
-    // Gateway Configuration Parameters
-    $accountId = $params['accountID'];
-    $secretKey = $params['secretKey'];
-    $testMode = $params['testMode'];
-    $dropdownField = $params['dropdownField'];
-    $radioField = $params['radioField'];
-    $textareaField = $params['textareaField'];
-
-    // Transaction Parameters
-    $transactionIdToRefund = $params['transid'];
-    $refundAmount = $params['amount'];
-    $currencyCode = $params['currency'];
-
-    // Client Parameters
-    $firstname = $params['clientdetails']['firstname'];
-    $lastname = $params['clientdetails']['lastname'];
-    $email = $params['clientdetails']['email'];
-    $address1 = $params['clientdetails']['address1'];
-    $address2 = $params['clientdetails']['address2'];
-    $city = $params['clientdetails']['city'];
-    $state = $params['clientdetails']['state'];
-    $postcode = $params['clientdetails']['postcode'];
-    $country = $params['clientdetails']['country'];
-    $phone = $params['clientdetails']['phonenumber'];
-
-    // System Parameters
-    $companyName = $params['companyname'];
-    $systemUrl = $params['systemurl'];
-    $langPayNow = $params['langpaynow'];
-    $moduleDisplayName = $params['name'];
-    $moduleName = $params['paymentmethod'];
-    $whmcsVersion = $params['whmcsVersion'];
-
-    // perform API call to initiate refund and interpret result
-
-    return array(
-        // 'success' if successful, otherwise 'declined', 'error' for failure
-        'status' => 'success',
-        // Data to be recorded in the gateway log - can be a string or array
-        'rawdata' => $responseData,
-        // Unique Transaction ID for the refund transaction
-        'transid' => $refundTransactionId,
-        // Optional fee amount for the fee value refunded
-        'fees' => $feeAmount,
-    );
-}
-*/
-
-/**
- * Cancel subscription.
- *
- * If the payment gateway creates subscriptions and stores the subscription
- * ID in tblhosting.subscriptionid, this function is called upon cancellation
- * or request by an admin user.
- *
- * @param array $params Payment Gateway Module Parameters
- *
- * @see http://docs.whmcs.com/Payment_Gateway_Module_Parameters
- *
- * @return array Transaction response status
- */
-
-/** ## Method 
-function veritrans_cancelSubscription($params)
-{
-    // Gateway Configuration Parameters
-    $accountId = $params['accountID'];
-    $secretKey = $params['secretKey'];
-    $testMode = $params['testMode'];
-    $dropdownField = $params['dropdownField'];
-    $radioField = $params['radioField'];
-    $textareaField = $params['textareaField'];
-
-    // Subscription Parameters
-    $subscriptionIdToCancel = $params['subscriptionID'];
-
-    // System Parameters
-    $companyName = $params['companyname'];
-    $systemUrl = $params['systemurl'];
-    $langPayNow = $params['langpaynow'];
-    $moduleDisplayName = $params['name'];
-    $moduleName = $params['paymentmethod'];
-    $whmcsVersion = $params['whmcsVersion'];
-
-    // perform API call to cancel subscription and interpret result
-
-    return array(
-        // 'success' if successful, any other value for failure
-        'status' => 'success',
-        // Data to be recorded in the gateway log - can be a string or array
-        'rawdata' => $responseData,
-    );
-}
-*/
