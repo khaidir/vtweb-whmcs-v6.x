@@ -250,22 +250,152 @@ function veritrans_link($params)
     // $postfields['return_url'] = $returnUrl;
     // ## Unused Post Method
 
+
+    // ====================================== Html output for VT Web =======================
     $htmlOutput = '<form method="get" action="' . $url . '">';
     foreach ($postfields as $k => $v) {
         $htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . urlencode($v) . '" />';
     }
     $htmlOutput .= '<input type="submit" value="' . $langPayNow . '" />';
     $htmlOutput .= '</form>';
-
-    // ## debugan
-    $htmlOutput1 = '';
-    // $htmlOutput .=  '<form method="post" action="google.com">';
-    $htmlOutput1 .=      '<div><h1> Custom Message </h1></div>';
-    $htmlOutput1 .=      '<script> document.getElementById("frmPayment").setAttribute("id", "frmPayment-out"); </script>';  // disable form auto submit
-    // $htmlOutput .=  '</form>';
-    //  ## end of debugan
+    // =============================================== End of VT Web =======================
     
-    return $htmlOutput;
+
+
+    // ====================================== Html output for VT Direct ====================
+    $postfields = array();
+    $postfields['gross_amount'] = ceil($amount);
+    $postfields['order_id'] = $invoiceId;
+    $postfields['description'] = $description;
+    $postfields['first_name'] = $firstname;
+    $postfields['last_name'] = $lastname;
+    $postfields['email'] = $email;
+    $postfields['address1'] = $address1;
+    $postfields['address2'] = $address2;
+    $postfields['city'] = $city;
+    $postfields['state'] = $state;
+    $postfields['postcode'] = $postcode;
+    $postfields['country'] = $country;
+    $postfields['phone'] = $phone;
+    $postfields['return_url'] = $returnUrl;
+    
+    $htmlOutput1 = '';
+    // JS script
+    $htmlOutput1 .='
+    <script> document.getElementById("frmPayment").setAttribute("id", "frmPayment-out"); </script>
+    ';  // disable form auto submit
+    $htmlOutput1 .='
+    <script> 
+    $(\'[class*="alert alert-info text-center"]\').text("Please Complete Your Credit Card Payment :");
+    $(\'[alt*="Loading"]\').hide();
+    </script>
+    ';  // disable form auto submit
+    $htmlOutput1 .='<link rel="stylesheet" href="'.$systemUrl.'/modules/gateways/veritrans-lib/jquery.fancybox.css" type="text/css" />
+    ';  // disable form auto submit
+    $htmlOutput1 .=      '
+    <script type="text/javascript" src="https://api.veritrans.co.id/v2/assets/js/veritrans.min.js"></script>
+    <script type="text/javascript" src="'.$systemUrl.'/modules/gateways/veritrans-lib/jquery.fancybox.pack.js"></script>
+    ';
+
+    // form submit
+    $htmlOutput1 .=  '<form method="post" action="'.$systemUrl.'/modules/gateways/veritrans-lib/vtdirect-charge.php" id="payment-form">';
+    $htmlOutput1 .=  '<input id="token_id" name="token_id" type="hidden" />';
+    foreach ($postfields as $k => $v) {
+        $htmlOutput1 .= '<input type="hidden" id="' . $k . '" name="' . $k . '" value="' . urlencode($v) . '" />';
+    }
+    $htmlOutput1 .=      '
+    <p>
+        <label>Card Number</label>
+        <input class="card-number" value="4511 1111 1111 1117" size="23" type="text" autocomplete="off" />
+    </p>
+    <p>
+        <label>Expiration (MM/YYYY)</label>
+        <input class="card-expiry-month" value="12" placeholder="MM" size="2" type="text" />
+        <span> / </span>
+        <input class="card-expiry-year" value="2020" placeholder="YYYY" size="4" type="text" />
+    </p>
+    <p>
+        <label>CVV</label>
+        <input class="card-cvv" value="123" size="4" type="password" autocomplete="off" />
+    </p>
+    <button class="submit-button" type="submit">Submit Payment</button>
+    ';
+    $enable3dsval = Veritrans_Config::$is3ds ? "true" : "false";
+    $amount = ceil($amount);
+    $environmenturl = Veritrans_Config::$isProduction ? "https://api.veritrans.co.id/v2/token" : "https://api.sandbox.veritrans.co.id/v2/token";;
+
+    $htmlOutput1 .=  '</form>';
+    // script get token
+    $htmlOutput1 .=      '
+  <script type="text/javascript">
+    $(function () {
+      // Sandbox URL
+      Veritrans.url = "'.$environmenturl.'";
+      Veritrans.client_key = "'.$clientkey.'";
+      var card = function () {
+        return {
+          "card_number": $(".card-number").val(),
+          "card_exp_month": $(".card-expiry-month").val(),
+          "card_exp_year": $(".card-expiry-year").val(),
+          "card_cvv": $(".card-cvv").val(),
+          "secure": '.$enable3dsval.' ,
+          "gross_amount": '.$amount.'
+        }
+      };
+
+      function callback(response) {
+        console.log(response);
+        if (response.redirect_url) {
+          console.log("3D SECURE");
+          // 3D Secure transaction, please open this popup
+          openDialog(response.redirect_url);
+
+        }
+        else if (response.status_code == "200") {
+          console.log("NOT 3-D SECURE");
+          // Success 3-D Secure or success normal
+          closeDialog();
+          // Submit form
+          $("#token_id").val(response.token_id);
+          $("#payment-form").submit();
+        }
+        else {
+          // Failed request token
+          console.log(response.status_code);
+          alert(response.status_message);
+          $("button").removeAttr("disabled");
+        }
+      }
+
+      function openDialog(url) {
+        $.fancybox.open({
+          href: url,
+          type: "iframe",
+          autoSize: false,
+          width: 700,
+          height: 500,
+          closeBtn: false,
+          modal: true
+        });
+      }
+
+      function closeDialog() {
+        $.fancybox.close();
+      }
+
+      $(".submit-button").click(function (event) {
+        console.log("SUBMIT");
+        event.preventDefault();
+        $(this).attr("disabled", "disabled");
+        Veritrans.token(card, callback);
+        return false;
+      });
+    });
+  </script>
+    ';
+    $htmlOutput1 .=      '';
+    
+    return $htmlOutput1;
 }
 
 /**
