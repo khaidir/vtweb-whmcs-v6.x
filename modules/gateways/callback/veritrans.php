@@ -36,15 +36,6 @@ if (!$gatewayParams['type']) {
     die("Module Not Activated");
 }
 
-// Retrieve data returned in payment gateway callback
-// Varies per payment gateway
-// $success = $_POST["x_status"];
-// $invoiceId = $_POST["x_invoice_id"];
-// $transactionId = $_POST["x_trans_id"];
-// $paymentAmount = $_POST["x_amount"];
-// $paymentFee = $_POST["x_fee"];
-// $hash = $_POST["x_hash"];
-
 /**
  * Validate callback authenticity.
  *
@@ -77,16 +68,6 @@ $paymentFee = 0;
  * Returns a normalised invoice ID.
  */
 $invoiceId = checkCbInvoiceID($invoiceId, $gatewayParams['name']);
-
-/**
- * Check Callback Transaction ID.
- *
- * Performs a check for any existing transactions with the same given
- * transaction number.
- *
- * Performs a die upon encountering a duplicate.
- */
-// checkCbTransID($transactionId); // No need to check, because Veritrans notification can be send more than once per transactionid.
 
 /**
  * Log Transaction.
