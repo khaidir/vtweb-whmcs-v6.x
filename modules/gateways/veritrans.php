@@ -294,6 +294,7 @@ function veritrans_link($params)
     ';  // disable form auto submit
     $htmlOutput1 .=      '
     <script type="text/javascript" src="https://api.veritrans.co.id/v2/assets/js/veritrans.min.js"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
     <script type="text/javascript" src="'.$systemUrl.'/modules/gateways/veritrans-lib/jquery.fancybox.pack.js"></script>
     ';
 
