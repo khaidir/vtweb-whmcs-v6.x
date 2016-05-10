@@ -76,13 +76,13 @@ function veritrans_config()
     return array(
         // the friendly display name for a payment gateway should be
         // defined here for backwards compatibility
-        'Veritrans' => array(
+        'FriendlyName' => array(
             'Type' => 'System',
-            'Value' => 'Credit Card & other(by Veritrans)',
+            'Value' => 'Veritrans',
         ),
         // a text field type allows for single line text input
         'clientkey' => array(
-            'Veritrans' => 'Veritrans Client Key',
+            'FriendlyName' => 'Veritrans Client Key',
             'Type' => 'text',
             'Size' => '50',
             'Default' => '',
@@ -90,7 +90,7 @@ function veritrans_config()
         ),
         // a text field type allows for single line text input
         'serverkey' => array(
-            'Veritrans' => 'Veritrans Server Key',
+            'FriendlyName' => 'Veritrans Server Key',
             'Type' => 'text',
             'Size' => '50',
             'Default' => '',
@@ -98,7 +98,7 @@ function veritrans_config()
         ),
         // the dropdown field type renders a select menu of options
         'environment' => array(
-            'Veritrans' => 'Environment Mode',
+            'FriendlyName' => 'Environment Mode',
             'Type' => 'dropdown',
             'Options' => array(
                 'sandbox' => 'Sandbox',
@@ -108,7 +108,7 @@ function veritrans_config()
         ),
         // the yesno field type displays a single checkbox option
         'enable3ds' => array(
-            'Veritrans' => 'Credit Card 3DS',
+            'FriendlyName' => 'Credit Card 3DS',
             'Type' => 'yesno',
             'Description' => 'Tick to enable 3DS for Credit Card payment',
         ),
