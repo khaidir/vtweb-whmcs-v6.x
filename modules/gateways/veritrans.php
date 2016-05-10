@@ -1,28 +1,16 @@
 <?php
 /**
- * WHMCS Sample Payment Gateway Module
+ * WHMCS Veritrans VTWeb Payment Gateway Module
  *
- * Payment Gateway modules allow you to integrate payment solutions with the
+ * Veritrans VTWeb Payment Gateway modules allow you to integrate Veritrans VTWeb with the
  * WHMCS platform.
  *
- * This sample file demonstrates how a payment gateway module for WHMCS should
- * be structured and all supported functionality it can contain.
- *
- * Within the module itself, all functions must be prefixed with the module
- * filename, followed by an underscore, and then the function name. For this
- * example file, the filename is "gatewaymodule" and therefore all functions
- * begin "gatewaymodule_".
- *
- * If your module or third party API does not support a given function, you
- * should not define that function within your module. Only the _config
- * function is required.
- *
  * For more information, please refer to the online documentation.
+ * @see http://docs.veritrans.co.id
  *
- * @see http://docs.whmcs.com/Gateway_Module_Developer_Docs
- *
- * @copyright Copyright (c) WHMCS Limited 2015
- * @license http://www.whmcs.com/license/ WHMCS Eula
+ * Module developed based on official WHMCS Sample Payment Gateway Module
+ * 
+ * @author rizda.prasetya@veritrans.co.id & harry.pujianto@veritrans.co.id
  */
 
 if (!defined("WHMCS")) {
@@ -164,14 +152,13 @@ function veritrans_link($params)
     $moduleName = $params['paymentmethod'];
     $whmcsVersion = $params['whmcsVersion'];
 
-    ## TODO: Build Param
     // Set VT config
     Veritrans_Config::$isProduction = ($environment == 'production') ? true : false;
     Veritrans_Config::$serverKey = $serverkey;
     // error_log($enable3ds); //debugan
     Veritrans_Config::$is3ds = ($enable3ds == 'on') ? true : false;
     Veritrans_Config::$isSanitized = true;
-    
+
     // Build basic param
     $params = array(
         'vtweb' => array(
@@ -207,7 +194,7 @@ function veritrans_link($params)
     $customer_details['billing_address'] = $billing_address;
     $params['customer_details'] = $customer_details;
 
-    // build item details
+    // build item details, there's only one item we can get from the WHMCS
     $item1 = array(
         'id' => 'a1',
         'price' => ceil($amount),
@@ -221,7 +208,7 @@ function veritrans_link($params)
     // error_log("===== params :"); //debugan
     // error_log(print_r($params,true)); //debugan
 
-    ## TODO: Get redirection URL
+    // Get redirection URL
     try {
         $url = Veritrans_VtWeb::getRedirectionUrl($params);
     } catch (Exception $e) {
@@ -236,14 +223,6 @@ function veritrans_link($params)
     }
     $htmlOutput .= '<input type="submit" value="' . $langPayNow . '" />';
     $htmlOutput .= '</form>';
-
-    // ## debugan
-    $htmlOutput1 = '';
-    // $htmlOutput .=  '<form method="post" action="google.com">';
-    $htmlOutput1 .=      '<div><h1> Custom Message </h1></div>';
-    $htmlOutput1 .=      '<script> document.getElementById("frmPayment").setAttribute("id", "frmPayment-out"); </script>';  // disable form auto submit
-    // $htmlOutput .=  '</form>';
-    //  ## end of debugan
     
     return $htmlOutput;
 }
