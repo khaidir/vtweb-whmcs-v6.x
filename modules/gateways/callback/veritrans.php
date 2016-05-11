@@ -40,7 +40,7 @@ if (!$gatewayParams['type']) {
  */
 
 // Create veritrans notif object from HTTP POST notif
-Veritrans_Config::$isProduction = ($gatewayParams['environment'] == 'production') ? true : false;
+Veritrans_Config::$isProduction = ($gatewayParams['environment'] == 'on') ? true : false;
 Veritrans_Config::$serverKey = $gatewayParams['serverkey'];
 $veritrans_notification = new Veritrans_Notification();
 

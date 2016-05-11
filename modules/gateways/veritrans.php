@@ -86,13 +86,9 @@ function veritrans_config()
         ),
         // the dropdown field type renders a select menu of options
         'environment' => array(
-            'FriendlyName' => 'Environment Mode',
-            'Type' => 'dropdown',
-            'Options' => array(
-                'sandbox' => 'Sandbox',
-                'production' => 'Production',
-            ),
-            'Description' => 'Select the Veritrans Environment, sandbox is for testing transaction',
+            'FriendlyName' => 'Production Mode',
+            'Type' => 'yesno',
+            'Description' => 'Tick to allow real transaction, untick for testing transaction in sandbox mode',
         ),
         // the yesno field type displays a single checkbox option
         'enable3ds' => array(
@@ -153,7 +149,7 @@ function veritrans_link($params)
     $whmcsVersion = $params['whmcsVersion'];
 
     // Set VT config
-    Veritrans_Config::$isProduction = ($environment == 'production') ? true : false;
+    Veritrans_Config::$isProduction = ($environment == 'on') ? true : false;
     Veritrans_Config::$serverKey = $serverkey;
     // error_log($enable3ds); //debugan
     Veritrans_Config::$is3ds = ($enable3ds == 'on') ? true : false;
