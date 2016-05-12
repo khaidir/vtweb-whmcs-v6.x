@@ -278,7 +278,10 @@ function veritrans_link($params)
     $htmlOutput1 = '';
     // JS script
     $htmlOutput1 .='
-    <script> document.getElementById("frmPayment").setAttribute("id", "frmPayment-out"); </script>
+    <script> 
+    document.getElementById("frmPayment").setAttribute("id", "frmPayment-out"); 
+    document.getElementById("submitfrm").setAttribute("id", "submitfrm-out"); 
+    </script>
     ';  // disable form auto submit
     $htmlOutput1 .='
     <script> 
