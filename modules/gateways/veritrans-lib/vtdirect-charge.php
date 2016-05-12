@@ -90,7 +90,7 @@ try {
 
 // Success
 if($response->transaction_status == 'capture') {
-
+  sleep(4);
 }
 // Deny
 else if($response->transaction_status == 'deny') {

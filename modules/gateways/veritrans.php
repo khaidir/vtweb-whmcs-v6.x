@@ -279,13 +279,30 @@ function veritrans_link($params)
     // JS script
     $htmlOutput1 .='
     <script> 
-    document.getElementById("frmPayment").setAttribute("id", "frmPayment-out"); 
-    document.getElementById("submitfrm").setAttribute("id", "submitfrm-out"); 
+    try {
+        document.getElementById("frmPayment").setAttribute("id", "frmPayment-out"); 
+    } catch (e){
+        console.log("failed to stop auto timer for WHMCS 6");
+    }
+    try {
+        document.getElementById("submitfrm").setAttribute("id", "submitfrm-out"); 
+    } catch (e){
+        console.log("failed to stop auto timer for WHMCS 5");
+    }
     </script>
     ';  // disable form auto submit
     $htmlOutput1 .='
-    <script> 
-    $(\'[class*="alert alert-info text-center"]\').text("Please Complete Your Credit Card Payment :");
+    <script>
+    try {
+        $(\'[class*="alert alert-info text-center"]\').text("Please Complete Your Credit Card Payment :");
+    } catch (e){
+        console.log("failed to change text for WHMCS 6");
+    }
+    try {
+        $(\'[class*="alert alert-block alert-warn textcenter"]\').text("Please Complete Your Credit Card Payment :");
+    } catch (e){
+        console.log("failed to change text for WHMCS 5");
+    }
     $(\'[alt*="Loading"]\').hide();
     </script>
     ';  // disable form auto submit
@@ -306,17 +323,17 @@ function veritrans_link($params)
     $htmlOutput1 .=      '
     <p>
         <label>Card Number</label>
-        <input class="card-number" value="4511 1111 1111 1117" size="23" type="text" autocomplete="off" />
+        <input class="card-number" value="" placeholder="4811 1111 1111 1114" size="23" type="text" autocomplete="on" />
     </p>
     <p>
-        <label>Expiration (MM/YYYY)</label>
-        <input class="card-expiry-month" value="12" placeholder="MM" size="2" type="text" />
+        <label>Expiration Date (month/year)</label>
+        <input class="card-expiry-month" value="" placeholder="MM" size="2" type="text" />
         <span> / </span>
-        <input class="card-expiry-year" value="2020" placeholder="YYYY" size="4" type="text" />
+        <input class="card-expiry-year" value="" placeholder="YYYY" size="4" type="text" />
     </p>
     <p>
         <label>CVV</label>
-        <input class="card-cvv" value="123" size="4" type="password" autocomplete="off" />
+        <input class="card-cvv" value="" size="4" type="password" autocomplete="off" />
     </p>
     <button class="submit-button" type="submit">Submit Payment</button>
     ';
