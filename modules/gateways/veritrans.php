@@ -157,11 +157,6 @@ function veritrans_link($params)
 
     // Build basic param
     $params = array(
-        'vtweb' => array(
-            "finish_redirect_url" => $returnUrl,
-            "unfinish_redirect_url" => $returnUrl,
-            "error_redirect_url" => $returnUrl
-            ),
         'transaction_details' => array(
             'order_id' => $invoiceId,
             'gross_amount' => ceil($amount),
@@ -206,7 +201,8 @@ function veritrans_link($params)
 
     // Get redirection URL
     try {
-        $url = Veritrans_VtWeb::getRedirectionUrl($params);
+        $snapToken = Veritrans_Snap::getSnapToken($params);
+        // $url = Veritrans_VtWeb::getRedirectionUrl($params);
     } catch (Exception $e) {
         // echo 'Caught exception: ',  $e->getMessage(), "\n";
         error_log('Caught exception: '.$e->getMessage()."\n");
@@ -225,22 +221,7 @@ function veritrans_link($params)
     
 
 
-    // ====================================== Html output for VT Direct ====================
-    $postfields = array();
-    $postfields['gross_amount'] = ceil($amount);
-    $postfields['order_id'] = $invoiceId;
-    $postfields['description'] = $description;
-    $postfields['first_name'] = $firstname;
-    $postfields['last_name'] = $lastname;
-    $postfields['email'] = $email;
-    $postfields['address1'] = $address1;
-    $postfields['address2'] = $address2;
-    $postfields['city'] = $city;
-    $postfields['state'] = $state;
-    $postfields['postcode'] = $postcode;
-    $postfields['country'] = $country;
-    $postfields['phone'] = $phone;
-    $postfields['return_url'] = $returnUrl;
+    // ====================================== Html output for SNAP ====================
     
     $htmlOutput1 = '';
     // JS script
@@ -273,111 +254,35 @@ function veritrans_link($params)
     $(\'[alt*="Loading"]\').hide();
     </script>
     ';  // disable form auto submit
-    $htmlOutput1 .='<link rel="stylesheet" href="'.$systemUrl.'/modules/gateways/veritrans-lib/jquery.fancybox.css" type="text/css" />
-    ';  // disable form auto submit
-    $htmlOutput1 .=      '
-    <script type="text/javascript" src="https://api.veritrans.co.id/v2/assets/js/veritrans.min.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-    <script type="text/javascript" src="'.$systemUrl.'/modules/gateways/veritrans-lib/jquery.fancybox.pack.js"></script>
-    ';
 
-    // form submit
-    $htmlOutput1 .=  '<form method="post" action="'.$systemUrl.'/modules/gateways/veritrans-lib/vtdirect-charge.php" id="payment-form">';
-    $htmlOutput1 .=  '<input id="token_id" name="token_id" type="hidden" />';
-    foreach ($postfields as $k => $v) {
-        $htmlOutput1 .= '<input type="hidden" id="' . $k . '" name="' . $k . '" value="' . urlencode($v) . '" />';
-    }
-    $htmlOutput1 .=      '
-    <p>
-        <label>Card Number</label>
-        <input class="card-number" value="" placeholder="4811 1111 1111 1114" size="23" type="text" autocomplete="on" />
-    </p>
-    <p>
-        <label>Expiration Date (month/year)</label>
-        <input class="card-expiry-month" value="" placeholder="MM" size="2" type="text" />
-        <span> / </span>
-        <input class="card-expiry-year" value="" placeholder="YYYY" size="4" type="text" />
-    </p>
-    <p>
-        <label>CVV</label>
-        <input class="card-cvv" value="" size="4" type="password" autocomplete="off" />
-    </p>
-    <button class="submit-button" type="submit">Submit Payment</button>
-    ';
+
     $enable3dsval = Veritrans_Config::$is3ds ? "true" : "false";
     $amount = ceil($amount);
     $environmenturl = Veritrans_Config::$isProduction ? "https://api.veritrans.co.id/v2/token" : "https://api.sandbox.veritrans.co.id/v2/token";;
 
-    $htmlOutput1 .=  '</form>';
-    // script get token
-    $htmlOutput1 .=      '
-  <script type="text/javascript">
-    $(function () {
-      // Sandbox URL
-      Veritrans.url = "'.$environmenturl.'";
-      Veritrans.client_key = "'.$clientkey.'";
-      var card = function () {
-        return {
-          "card_number": $(".card-number").val(),
-          "card_exp_month": $(".card-expiry-month").val(),
-          "card_exp_year": $(".card-expiry-year").val(),
-          "card_cvv": $(".card-cvv").val(),
-          "secure": '.$enable3dsval.' ,
-          "gross_amount": '.$amount.'
-        }
-      };
+    $htmlOutput1 .=  '
+        <button class="submit-button" id="snap-pay">Proceed To Payment</button>
+        
+        <script src="https://app.sandbox.veritrans.co.id/snap/snap.js"></script>
+        <script type="text/javascript">
+            document.getElementById("snap-pay").onclick = function(){
+                snap.pay("'.$snapToken.'", {
+                    onSuccess:{
+                        window.location = '.$returnUrl.';
+                    },
+                    onPending:{
+                        window.location = '.$returnUrl.';
+                    },
+                    onError:{
+                        window.location = '.$returnUrl.';
+                    }
+                });
+            };
+        </script>
 
-      function callback(response) {
-        console.log(response);
-        if (response.redirect_url) {
-          console.log("3D SECURE");
-          // 3D Secure transaction, please open this popup
-          openDialog(response.redirect_url);
-
-        }
-        else if (response.status_code == "200") {
-          console.log("NOT 3-D SECURE");
-          // Success 3-D Secure or success normal
-          closeDialog();
-          // Submit form
-          $("#token_id").val(response.token_id);
-          $("#payment-form").submit();
-        }
-        else {
-          // Failed request token
-          console.log(response.status_code);
-          alert(response.status_message);
-          $("button").removeAttr("disabled");
-        }
-      }
-
-      function openDialog(url) {
-        $.fancybox.open({
-          href: url,
-          type: "iframe",
-          autoSize: false,
-          width: 700,
-          height: 500,
-          closeBtn: false,
-          modal: true
-        });
-      }
-
-      function closeDialog() {
-        $.fancybox.close();
-      }
-
-      $(".submit-button").click(function (event) {
-        console.log("SUBMIT");
-        event.preventDefault();
-        $(this).attr("disabled", "disabled");
-        Veritrans.token(card, callback);
-        return false;
-      });
-    });
-  </script>
     ';
-    $htmlOutput1 .=      '';
+
+    $htmlOutput1 .= '';
     
     return $htmlOutput1;
 }
