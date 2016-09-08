@@ -1,21 +1,20 @@
 <?php
 /**
- * WHMCS Sample Payment Callback File
+ * Veritrans Payment Callback File
  *
- * This sample file demonstrates how a payment gateway callback should be
- * handled within WHMCS.
- *
- * It demonstrates verifying that the payment gateway module is active,
+ * Call back used to retrieve transaction HTTP notification, then check validity using 
+ * GetStatus API Call
  * validating an Invoice ID, checking for the existence of a Transaction ID,
  * Logging the Transaction for debugging and Adding Payment to an Invoice.
  *
  * For more information, please refer to the online documentation.
+ * @see http://docs.veritrans.co.id
  *
- * @see http://docs.whmcs.com/Gateway_Module_Developer_Docs
- *
- * @copyright Copyright (c) WHMCS Limited 2015
- * @license http://www.whmcs.com/license/ WHMCS Eula
+ * Module developed based on official WHMCS Sample Payment Gateway Module
+ * 
+ * @author rizda.prasetya@veritrans.co.id & harry.pujianto@veritrans.co.id
  */
+
 
 // Require libraries needed for gateway module functions.
 require_once __DIR__ . '/../../../init.php';
@@ -36,21 +35,8 @@ if (!$gatewayParams['type']) {
     die("Module Not Activated");
 }
 
-// Retrieve data returned in payment gateway callback
-// Varies per payment gateway
-// $success = $_POST["x_status"];
-// $invoiceId = $_POST["x_invoice_id"];
-// $transactionId = $_POST["x_trans_id"];
-// $paymentAmount = $_POST["x_amount"];
-// $paymentFee = $_POST["x_fee"];
-// $hash = $_POST["x_hash"];
-
 /**
  * Validate callback authenticity.
- *
- * Most payment gateways provide a method of verifying that a callback
- * originated from them. In the case of our example here, this is achieved by
- * way of a shared secret which is used to build and compare a hash.
  */
 
 // Create veritrans notif object from HTTP POST notif
@@ -77,16 +63,6 @@ $paymentFee = 0;
  * Returns a normalised invoice ID.
  */
 $invoiceId = checkCbInvoiceID($invoiceId, $gatewayParams['name']);
-
-/**
- * Check Callback Transaction ID.
- *
- * Performs a check for any existing transactions with the same given
- * transaction number.
- *
- * Performs a die upon encountering a duplicate.
- */
-// checkCbTransID($transactionId); // No need to check, because Veritrans notification can be send more than once per transactionid.
 
 /**
  * Log Transaction.
