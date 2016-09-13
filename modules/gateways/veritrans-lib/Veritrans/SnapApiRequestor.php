@@ -49,6 +49,7 @@ class Veritrans_SnapApiRequestor {
       CURLOPT_RETURNTRANSFER => 1,
       CURLOPT_CAINFO => dirname(__FILE__) . "/../data/cacert.pem"
     );
+    error_log(base64_encode($server_key . ':'));
 
     // merging with Veritrans_Config::$curlOptions
     if (count(Veritrans_Config::$curlOptions)) {
@@ -73,6 +74,8 @@ class Veritrans_SnapApiRequestor {
         $curl_options[CURLOPT_POSTFIELDS] = '';
       }
     }
+    // error_log($body); // debugan
+    // error_log($url); // debugan
 
     curl_setopt_array($ch, $curl_options);
 

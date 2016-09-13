@@ -1,4 +1,6 @@
 <?php
+// TODO snap still malfunctioned because charged more than one time, lead to error order ID has been utilized
+
 /**
  * WHMCS Veritrans VTWeb Payment Gateway Module
  *
@@ -203,9 +205,10 @@ function veritrans_link($params)
     try {
         $snapToken = Veritrans_Snap::getSnapToken($params);
         // $url = Veritrans_VtWeb::getRedirectionUrl($params);
+        error_log(" ############# TOKEN ::: ".$snapToken);
     } catch (Exception $e) {
         // echo 'Caught exception: ',  $e->getMessage(), "\n";
-        error_log('Caught exception: '.$e->getMessage()."\n");
+        error_log(' ############# Caught exception: '.$e->getMessage()."\n");
     }
 
 
@@ -225,56 +228,57 @@ function veritrans_link($params)
     
     $htmlOutput1 = '';
     // JS script
-    $htmlOutput1 .='
-    <script> 
-    try {
-        document.getElementById("frmPayment").setAttribute("id", "frmPayment-out"); 
-    } catch (e){
-        console.log("failed to stop auto timer for WHMCS 6");
-    }
-    try {
-        document.getElementById("submitfrm").setAttribute("id", "submitfrm-out"); 
-    } catch (e){
-        console.log("failed to stop auto timer for WHMCS 5");
-    }
-    </script>
-    ';  // disable form auto submit
-    $htmlOutput1 .='
-    <script>
-    try {
-        $(\'[class*="alert alert-info text-center"]\').text("Please Complete Your Credit Card Payment :");
-    } catch (e){
-        console.log("failed to change text for WHMCS 6");
-    }
-    try {
-        $(\'[class*="alert alert-block alert-warn textcenter"]\').text("Please Complete Your Credit Card Payment :");
-    } catch (e){
-        console.log("failed to change text for WHMCS 5");
-    }
-    $(\'[alt*="Loading"]\').hide();
-    </script>
-    ';  // disable form auto submit
+    
+    // $htmlOutput1 .='
+    // <script> 
+    // try {
+    //     document.getElementById("frmPayment").setAttribute("id", "frmPayment-out"); 
+    // } catch (e){
+    //     console.log("failed to stop auto timer for WHMCS 6");
+    // }
+    // try {
+    //     document.getElementById("submitfrm").setAttribute("id", "submitfrm-out"); 
+    // } catch (e){
+    //     console.log("failed to stop auto timer for WHMCS 5");
+    // }
+    // </script>
+    // ';  // disable form auto submit
+    // $htmlOutput1 .='
+    // <script>
+    // try {
+    //     $(\'[class*="alert alert-info text-center"]\').text("Please Complete Your Credit Card Payment :");
+    // } catch (e){
+    //     console.log("failed to change text for WHMCS 6");
+    // }
+    // try {
+    //     $(\'[class*="alert alert-block alert-warn textcenter"]\').text("Please Complete Your Credit Card Payment :");
+    // } catch (e){
+    //     console.log("failed to change text for WHMCS 5");
+    // }
+    // $(\'[alt*="Loading"]\').hide();
+    // </script>
+    // ';  // disable form auto submit
 
 
     $enable3dsval = Veritrans_Config::$is3ds ? "true" : "false";
     $amount = ceil($amount);
-    $environmenturl = Veritrans_Config::$isProduction ? "https://api.veritrans.co.id/v2/token" : "https://api.sandbox.veritrans.co.id/v2/token";;
+    $environmenturl = Veritrans_Config::$isProduction ? "https://app.veritrans.co.id/snap/snap.js" : "https://app.sandbox.veritrans.co.id/snap/snap.js";;
 
     $htmlOutput1 .=  '
         <button class="submit-button" id="snap-pay">Proceed To Payment</button>
         
-        <script src="https://app.sandbox.veritrans.co.id/snap/snap.js"></script>
+        <script src="'.$environmenturl.'"></script>
         <script type="text/javascript">
             document.getElementById("snap-pay").onclick = function(){
                 snap.pay("'.$snapToken.'", {
                     onSuccess:{
-                        window.location = '.$returnUrl.';
+                        window.location = "'.$returnUrl.'";
                     },
                     onPending:{
-                        window.location = '.$returnUrl.';
+                        window.location = "'.$returnUrl.'";
                     },
                     onError:{
-                        window.location = '.$returnUrl.';
+                        window.location = "'.$returnUrl.'";
                     }
                 });
             };
@@ -285,6 +289,26 @@ function veritrans_link($params)
     $htmlOutput1 .= '';
     
     return $htmlOutput1;
+
+    // ====================== RAZORPAY ========================
+
+    return '        <form action="/purchase" method="POST">
+        <!-- Note that the amount is in paise = 50 INR -->
+        <script
+            src="https://checkout.razorpay.com/v1/checkout.js"
+            data-key="rzp_test_HwNnvzNEKaiG6h"
+            data-amount="5000"
+            data-buttontext="Pay with Razorpay"
+            data-name="<script>alert()</script>"
+            data-description="Purchase Description"
+            data-image= "http://requestb.in/1gcxk1o1"
+            data-prefill.name="Harshil Mathur"
+            data-prefill.email="<script>raizer@yopmail.com"
+            data-theme.color="#F37254"
+        ></script>
+        <input type="hidden" value="Hidden Element" name="hidden">
+        </form>';
+
 }
 
 /**
