@@ -1,6 +1,6 @@
 <?php
 /**
- * Veritrans Payment Callback File
+ * Midtrans Payment Callback File
  *
  * Call back used to retrieve transaction HTTP notification, then check validity using 
  * GetStatus API Call
@@ -8,11 +8,11 @@
  * Logging the Transaction for debugging and Adding Payment to an Invoice.
  *
  * For more information, please refer to the online documentation.
- * @see http://docs.veritrans.co.id
+ * @see http://docs.midtrans.com
  *
  * Module developed based on official WHMCS Sample Payment Gateway Module
  * 
- * @author rizda.prasetya@veritrans.co.id & harry.pujianto@veritrans.co.id
+ * @author rizda.prasetya@midtrans.com
  */
 
 

@@ -49,7 +49,6 @@ class Veritrans_SnapApiRequestor {
       CURLOPT_RETURNTRANSFER => 1,
       CURLOPT_CAINFO => dirname(__FILE__) . "/../data/cacert.pem"
     );
-    error_log(base64_encode($server_key . ':'));
 
     // merging with Veritrans_Config::$curlOptions
     if (count(Veritrans_Config::$curlOptions)) {
@@ -74,8 +73,6 @@ class Veritrans_SnapApiRequestor {
         $curl_options[CURLOPT_POSTFIELDS] = '';
       }
     }
-    // error_log($body); // debugan
-    // error_log($url); // debugan
 
     curl_setopt_array($ch, $curl_options);
 
@@ -95,8 +92,8 @@ class Veritrans_SnapApiRequestor {
     }
     else {
       $result_array = json_decode($result);
-      if ($info['http_code'] != 200) {
-        $message = 'Veritrans Error (' . $info['http_code'] . '): '
+      if ($info['http_code'] != 201) {
+        $message = 'Midtrans Error (' . $info['http_code'] . '): '
             . implode(',', $result_array->error_messages);
         throw new Exception($message, $info['http_code']);
 

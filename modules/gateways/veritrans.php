@@ -1,18 +1,19 @@
 <?php
-// TODO snap still malfunctioned because charged more than one time, lead to error order ID has been utilized
+//  Update library to SNAP
+//  Update Veritrans String to Midtrans
 
 /**
- * WHMCS Veritrans VTWeb Payment Gateway Module
+ * WHMCS Midtrans SNAP Payment Gateway Module
  *
- * Veritrans VTWeb Payment Gateway modules allow you to integrate Veritrans VTWeb with the
+ * Midtrans SNAP Payment Gateway Module allow you to integrate Midtrans SNAP with the
  * WHMCS platform.
  *
  * For more information, please refer to the online documentation.
- * @see http://docs.veritrans.co.id
+ * @see http://docs.midtrans.com
  *
  * Module developed based on official WHMCS Sample Payment Gateway Module
  * 
- * @author rizda.prasetya@veritrans.co.id & harry.pujianto@veritrans.co.id
+ * @author rizda.prasetya@midtrans.com
  */
 
 if (!defined("WHMCS")) {
@@ -34,7 +35,7 @@ require_once(dirname(__FILE__) . '/veritrans-lib/Veritrans.php');
 function veritrans_MetaData()
 {
     return array(
-        'DisplayName' => 'Veritrans Payment Gateway Module',
+        'DisplayName' => 'Midtrans Payment Gateway Module',
         'APIVersion' => '1.1', // Use API Version 1.1
         'DisableLocalCredtCardInput' => true,
         'TokenisedStorage' => true,
@@ -68,23 +69,23 @@ function veritrans_config()
         // defined here for backwards compatibility
         'FriendlyName' => array(
             'Type' => 'System',
-            'Value' => 'Veritrans',
+            'Value' => 'Midtrans',
         ),
         // a text field type allows for single line text input
         'clientkey' => array(
-            'FriendlyName' => 'Veritrans Client Key',
+            'FriendlyName' => 'Midtrans Client Key',
             'Type' => 'text',
             'Size' => '50',
             'Default' => '',
-            'Description' => 'Input your Client Server Key. Get it at my.veritrans.co.id',
+            'Description' => 'Input your Client Server Key. Get it at dashboard.midtrans.com',
         ),
         // a text field type allows for single line text input
         'serverkey' => array(
-            'FriendlyName' => 'Veritrans Server Key',
+            'FriendlyName' => 'Midtrans Server Key',
             'Type' => 'text',
             'Size' => '50',
             'Default' => '',
-            'Description' => 'Input your Veritrans Server Key. Get it at my.veritrans.co.id',
+            'Description' => 'Input your Midtrans Server Key. Get it at dashboard.midtrans.com',
         ),
         // the dropdown field type renders a select menu of options
         'environment' => array(
@@ -201,14 +202,16 @@ function veritrans_link($params)
     // error_log("===== params :"); //debugan
     // error_log(print_r($params,true)); //debugan
 
-    // Get redirection URL
+    // Get snap token
     try {
         $snapToken = Veritrans_Snap::getSnapToken($params);
         // $url = Veritrans_VtWeb::getRedirectionUrl($params);
-        error_log(" ############# TOKEN ::: ".$snapToken);
+        // error_log(" ############# TOKEN ::: ".$snapToken);
     } catch (Exception $e) {
-        // echo 'Caught exception: ',  $e->getMessage(), "\n";
-        error_log(' ############# Caught exception: '.$e->getMessage()."\n");
+        // error_log('Caught exception: ',  $e->getMessage(), "\n");
+        if (preg_match('/utilized/',$e->getMessage()) ){
+            return "<h4> Awaiting Your Payment </h4>";
+        }
     }
 
 
@@ -262,26 +265,46 @@ function veritrans_link($params)
 
     $enable3dsval = Veritrans_Config::$is3ds ? "true" : "false";
     $amount = ceil($amount);
-    $environmenturl = Veritrans_Config::$isProduction ? "https://app.veritrans.co.id/snap/snap.js" : "https://app.sandbox.veritrans.co.id/snap/snap.js";;
+    $environmenturl = Veritrans_Config::$isProduction ? "https://app.midtrans.com/snap/snap.js" : "https://app.sandbox.midtrans.com/snap/snap.js";;
 
     $htmlOutput1 .=  '
         <button class="submit-button" id="snap-pay">Proceed To Payment</button>
+        <button class="submit-button" id="snap-instruction" style="display:none;">
+            <a  target="_blank" href="#" id="instruction-button" title="View Payment Instruction">View Payment Instruction</a>
+        </button>
         
         <script src="'.$environmenturl.'"></script>
         <script type="text/javascript">
-            document.getElementById("snap-pay").onclick = function(){
+            function fireSnap(){
                 snap.pay("'.$snapToken.'", {
-                    onSuccess:{
-                        window.location = "'.$returnUrl.'";
+                    onSuccess: function(result){
+                        document.getElementsByClassName("unpaid")[0].innerHTML = "Payment Completed!";
+                        setTimeout(function(){
+                            window.location = "'.$returnUrl.'";
+                        },2000); 
                     },
-                    onPending:{
-                        window.location = "'.$returnUrl.'";
+                    onPending: function(result){
+                        // window.location = "'.$returnUrl.'";
+                        document.getElementById("instruction-button").href = result.pdf_url;
+                        document.getElementById("snap-instruction").style.display = "block";
+                        document.getElementById("snap-pay").style.display = "none";
+                        document.getElementsByClassName("unpaid")[0].innerHTML = "Awaiting Payment";
                     },
-                    onError:{
+                    onError: function(result){
                         window.location = "'.$returnUrl.'";
                     }
                 });
+            }; 
+            
+            document.getElementById("snap-pay").onclick = function(){
+                fireSnap();
             };
+
+            // Auto trigger SNAP
+            setTimeout(function(){
+                fireSnap();
+            },500); 
+
         </script>
 
     ';
@@ -289,26 +312,6 @@ function veritrans_link($params)
     $htmlOutput1 .= '';
     
     return $htmlOutput1;
-
-    // ====================== RAZORPAY ========================
-
-    return '        <form action="/purchase" method="POST">
-        <!-- Note that the amount is in paise = 50 INR -->
-        <script
-            src="https://checkout.razorpay.com/v1/checkout.js"
-            data-key="rzp_test_HwNnvzNEKaiG6h"
-            data-amount="5000"
-            data-buttontext="Pay with Razorpay"
-            data-name="<script>alert()</script>"
-            data-description="Purchase Description"
-            data-image= "http://requestb.in/1gcxk1o1"
-            data-prefill.name="Harshil Mathur"
-            data-prefill.email="<script>raizer@yopmail.com"
-            data-theme.color="#F37254"
-        ></script>
-        <input type="hidden" value="Hidden Element" name="hidden">
-        </form>';
-
 }
 
 /**
